@@ -79,27 +79,21 @@ afterEach(async () => {
 });
 
 describe("canvas view", () => {
-	it("requires a user action before execution and renewed trust after edits", async () => {
+	it("runs a canvas as soon as it opens and reruns after edits", async () => {
 		const source = `import { canvasEvaluationProbe } from "cursor/canvas"; canvasEvaluationProbe.count += 1; ${simpleSource("first")}`;
 		const { view, file, read } = setupView(source, false);
 		await load(view, file);
-		expect(canvasEvaluationProbe.count).toBe(0);
-		expect(view.contentEl.textContent).toContain("View the source");
-		const trustButton = view.contentEl.querySelector(".cursor-canvas-trust button");
-		expect(trustButton).toHaveProperty("disabled", true);
-		await click(trustButton);
-		expect(canvasEvaluationProbe.count).toBe(0);
-		await click(view.contentEl.querySelector(".cursor-canvas-toggle"));
-		expect(view.contentEl.querySelector("pre")?.textContent).toBe(source);
-		expect(canvasEvaluationProbe.count).toBe(0);
-		await click(view.contentEl.querySelector(".cursor-canvas-toggle"));
-		await click(view.contentEl.querySelector(".cursor-canvas-trust button"));
 		expect(canvasEvaluationProbe.count).toBe(1);
 		expect(view.contentEl.textContent).toContain("first");
-		read.mockResolvedValue(source + "\n// edited");
+		expect(view.contentEl.querySelector(".cursor-canvas-trust")).toBeNull();
+		const edited = source + "\n// edited";
+		read.mockResolvedValue(edited);
 		await act(async () => { await (view as any).reloadFromDisk(); });
-		expect(view.contentEl.querySelector(".cursor-canvas-trust")).not.toBeNull();
-		expect(canvasEvaluationProbe.count).toBe(1);
+		expect(view.contentEl.textContent).toContain("first");
+		expect(canvasEvaluationProbe.count).toBe(2);
+		await click(view.contentEl.querySelector(".cursor-canvas-toggle"));
+		expect(view.contentEl.querySelector("pre")?.textContent).toBe(edited);
+		expect(canvasEvaluationProbe.count).toBe(2);
 	});
 
 	it.each([

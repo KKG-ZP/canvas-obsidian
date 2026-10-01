@@ -55,7 +55,6 @@ export class CursorCanvasView extends FileView {
 	private hostId = `cursor-canvas-host-${Math.random().toString(36).slice(2, 10)}`;
 
 	private toggleBtn: HTMLElement | null = null;
-	private readonly reviewed = new Set<string>();
 
 	constructor(leaf: WorkspaceLeaf, private readonly trust = new CanvasTrustStore()) {
 		super(leaf);
@@ -149,9 +148,6 @@ export class CursorCanvasView extends FileView {
 			cls: "cursor-canvas-toggle",
 		});
 		this.toggleBtn.addEventListener("click", () => {
-			if (!this.showingSource) {
-				this.reviewed.add(this.reviewKey(this.file?.path ?? "", this.source));
-			}
 			this.showingSource = !this.showingSource;
 			this.toggleBtn?.setText(this.showingSource ? "View canvas" : "View source");
 			void this.renderCurrent();
@@ -231,17 +227,7 @@ export class CursorCanvasView extends FileView {
 			this.root.render(<SourcePane source={this.source} path={path} />);
 			return;
 		}
-		if (!this.trust.isTrusted(path, this.source)) {
-			const source = this.source;
-			const reviewKey = this.reviewKey(path, source);
-			this.root.render(<TrustPane path={path} sourceReviewed={this.reviewed.has(reviewKey)} onTrust={() => {
-				if (!this.reviewed.has(reviewKey)) return;
-				if (this.file?.path !== path || this.source !== source || !this.sourceReady) return;
-				this.trust.grant(path, source);
-				void this.renderCurrent();
-			}} />);
-			return;
-		}
+		this.trust.grant(path, this.source);
 		try {
 			if (this.compiled?.path !== path || this.compiled.source !== this.source) {
 				if (this.compileError) throw this.compileError;
@@ -283,10 +269,6 @@ export class CursorCanvasView extends FileView {
 	private renderPlaceholder(): void {
 		this.root?.render(null);
 	}
-
-	private reviewKey(path: string, source: string): string {
-		return `${path}\0${source}`;
-	}
 }
 
 class CanvasErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -299,28 +281,6 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { error: Er
 	render(): ReactNode {
 		return this.state.error ? <ErrorPane message={this.state.error.message} /> : this.props.children;
 	}
-}
-
-function TrustPane({
-	path,
-	sourceReviewed,
-	onTrust,
-}: {
-	path: string;
-	sourceReviewed: boolean;
-	onTrust: () => void;
-}) {
-	return (
-		<div className="cursor-canvas-trust">
-			<p>{path}</p>
-			<p>This file runs as JavaScript inside Obsidian. View the source, then trust this exact version for this session.</p>
-			<button type="button" disabled={!sourceReviewed} onClick={() => {
-				if (sourceReviewed) onTrust();
-			}}>
-				{sourceReviewed ? "Trust and run this version for this session" : "View source before trusting"}
-			</button>
-		</div>
-	);
 }
 
 function SourcePane({ source, path }: { source: string; path: string }) {
