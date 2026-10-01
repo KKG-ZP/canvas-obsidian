@@ -1,0 +1,13 @@
+.vscode
+*.iml
+.idea
+node_modules
+/main.js
+/styles.css
+*.map
+data.json
+.DS_Store
+test-vault/.obsidian/workspace.json
+test-vault/.obsidian/workspace-mobile.json
+test-vault/.obsidian/plugins/cursor-canvas/main.js
+test-vault/.obsidian/plugins/cursor-canvas/styles.css

@@ -1,0 +1,79 @@
+@import "@mantine/core/styles.css";
+@import "@mantine/charts/styles.css";
+
+.cursor-canvas-view {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.cursor-canvas-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	flex: 0 0 auto;
+}
+
+.cursor-canvas-toggle {
+	font-size: 12px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.cursor-canvas-toggle:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.cursor-canvas-host {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding: 16px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.cursor-canvas-mount {
+	min-height: 100%;
+}
+
+.cursor-canvas-error,
+.cursor-canvas-source {
+	font-family: var(--font-monospace);
+	font-size: 12px;
+}
+
+.cursor-canvas-error-title {
+	font-family: var(--font-interface);
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-error);
+	margin-bottom: 8px;
+}
+
+.cursor-canvas-source-path {
+	font-family: var(--font-interface);
+	color: var(--text-muted);
+	margin-bottom: 8px;
+}
+
+.cursor-canvas-error pre,
+.cursor-canvas-source pre {
+	white-space: pre-wrap;
+	word-break: break-word;
+	margin: 0;
+}
+
+/* File explorer hides unregistered extensions. Registration clears the class
+   after a refresh; this keeps `.canvas.tsx` visible immediately. */
+.nav-files-container:not(.show-unsupported) .nav-file-title.is-unsupported[data-path$=".canvas.tsx"] {
+	display: flex;
+}

@@ -1,0 +1,9 @@
+{
+	"id": "cursor-canvas",
+	"name": "Cursor Canvas",
+	"version": "1.0.0",
+	"minAppVersion": "1.5.0",
+	"description": "Open Cursor .canvas.tsx files as live React canvases inside Obsidian.",
+	"author": "zengpu",
+	"isDesktopOnly": false
+}
