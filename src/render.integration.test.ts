@@ -5,6 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MantineProvider } from "@mantine/core";
 import { describe, expect, it } from "vitest";
+import { CanvasTrustStore } from "./trust";
 import { loadCanvasComponent } from "./compile";
 import { CanvasFileProvider } from "./cursor-canvas-shim";
 import { createCanvasRequire } from "./runtime";
@@ -13,7 +14,9 @@ const fixturesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "fixture
 
 function renderFixture(filename: string): string {
 	const source = readFileSync(join(fixturesDir, filename), "utf8");
-	const Canvas = loadCanvasComponent(source, createCanvasRequire());
+	const trust = new CanvasTrustStore();
+	trust.grant(filename, source);
+	const Canvas = loadCanvasComponent(source, createCanvasRequire(), { path: filename, trust });
 	return renderToStaticMarkup(
 		createElement(
 			CanvasFileProvider,

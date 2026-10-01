@@ -2,9 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
 	CanvasCompileError,
 	collectRequireSpecifiers,
-	loadCanvasComponent,
+	loadCanvasComponent as evaluateCanvas,
 	transformCanvasSource,
 } from "./compile";
+
+import { CanvasTrustStore } from "./trust";
+
+function loadCanvasComponent(source: string, requireFn: Parameters<typeof evaluateCanvas>[1]) {
+	const trust = new CanvasTrustStore();
+	trust.grant("test.canvas.tsx", source);
+	return evaluateCanvas(source, requireFn, { path: "test.canvas.tsx", trust });
+}
 
 const SIMPLE_CANVAS = `
 import { Stack, Card, CardHeader, CardBody, Table, Stat } from "cursor/canvas";
@@ -93,5 +101,75 @@ export default function Typed(props: { style?: CSSProperties }) {
 `;
 		const code = transformCanvasSource(source);
 		expect(collectRequireSpecifiers(code)).toEqual(["cursor/canvas"]);
+	});
+});
+
+
+describe("canvas trust and import syntax", () => {
+	it("does not execute global access before the exact file version is trusted", () => {
+		const source = 'globalThis.__canvasExecuted = true; export default function Canvas() { return null; }';
+		const trust = new CanvasTrustStore();
+		const authorization = { path: "a.canvas.tsx", trust };
+		const globals = globalThis as typeof globalThis & { __canvasExecuted?: boolean };
+		delete globals.__canvasExecuted;
+		expect(() => evaluateCanvas(source, () => ({}), authorization)).toThrow(/Trust this file version/);
+		expect(globals.__canvasExecuted).toBeUndefined();
+		trust.grant(authorization.path, source);
+		expect(() => evaluateCanvas(source, () => ({}), authorization)).toThrow(/cannot access globalThis/);
+		expect(globals.__canvasExecuted).toBeUndefined();
+		delete globals.__canvasExecuted;
+		expect(() => evaluateCanvas(source + "\n// changed", () => ({}), authorization)).toThrow(/Trust/);
+		expect(() => evaluateCanvas(source, () => ({}), { path: "b.canvas.tsx", trust })).toThrow(/Trust/);
+	});
+
+	it("ignores comments, strings, regex literals and template text", () => {
+		const code = [
+			'// require("fs")',
+			'/* require("path") */',
+			`const text = 'require("fs")';`,
+			'const pattern = /require("fs")/;',
+			'const template = `require("fs")`;',
+			'require /* comment */ ("react");',
+		].join("\n");
+		expect(collectRequireSpecifiers(code)).toEqual(["react"]);
+	});
+
+	it("checks executable calls inside template expressions and escaped literals", () => {
+		expect(collectRequireSpecifiers('const text = `${require("fs")}`; require("\\x72eact");'))
+			.toEqual(["fs", "react"]);
+	});
+
+	it("accepts a component displaying require text", () => {
+		expect(typeof loadCanvasComponent(`export default function Canvas() { return 'require("fs")'; }`, () => ({})))
+			.toBe("function");
+	});
+
+	it("guards computed require calls at evaluation time", () => {
+		expect(() => loadCanvasComponent('const id = "fs"; require(id); export default function Canvas() { return null; }', () => ({})))
+			.toThrow(/Disallowed import/);
+	});
+
+	it("rejects dynamic import() before the module runs", () => {
+		const globals = globalThis as typeof globalThis & { __imported?: boolean };
+		delete globals.__imported;
+		expect(() => loadCanvasComponent(
+			'export default function Canvas() { return import("fs"); }',
+			() => { globals.__imported = true; return {}; },
+		)).toThrow(/"fs"/);
+		expect(() => loadCanvasComponent(
+			'const id = "fs"; export default function Canvas() { return import(id); }',
+			() => ({}),
+		)).toThrow(/Disallowed import/);
+		expect(globals.__imported).toBeUndefined();
+	});
+
+	it("rejects constructor access before it can reach the real Function", () => {
+		const globals = globalThis as typeof globalThis & { __escaped?: boolean };
+		delete globals.__escaped;
+		expect(() => loadCanvasComponent(
+			'const F = (() => 0).constructor; F("globalThis.__escaped = true")(); export default function Canvas() { return null; }',
+			() => ({}),
+		)).toThrow(/constructor/);
+		expect(globals.__escaped).toBeUndefined();
 	});
 });

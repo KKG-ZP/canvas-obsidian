@@ -72,8 +72,8 @@
 	margin: 0;
 }
 
-/* File explorer hides unregistered extensions. Registration clears the class
-   after a refresh; this keeps `.canvas.tsx` visible immediately. */
+/* File explorer hides unregistered extensions. `.canvas.tsx` stays visible
+   without registering every `.tsx` file. */
 .nav-files-container:not(.show-unsupported) .nav-file-title.is-unsupported[data-path$=".canvas.tsx"] {
 	display: flex;
 }

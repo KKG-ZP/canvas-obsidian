@@ -20,6 +20,7 @@
 		"@mantine/charts": "^7.17.8",
 		"@mantine/core": "^7.17.8",
 		"@thisismydesign/cursor-canvas-web": "^0.3.0",
+		"acorn": "^8.18.0",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"recharts": "^2.15.4",
@@ -30,7 +31,9 @@
 		"@types/react": "^18.3.18",
 		"@types/react-dom": "^18.3.5",
 		"esbuild": "0.25.5",
+		"jsdom": "^29.1.1",
 		"obsidian": "latest",
+		"postcss": "^8.5.28",
 		"typescript": "^5.8.3",
 		"vitest": "^3.2.4"
 	}

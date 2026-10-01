@@ -23,14 +23,16 @@ export function Button({
 }: CanvasButtonProps) {
 	const theme = useHostTheme();
 	const [hovered, setHovered] = useState(false);
-	const colors = buttonColors(variant, hovered, theme);
+	const colors = buttonColors(variant, hovered && !disabled, theme);
 
 	return (
 		<button
 			type={type}
 			disabled={disabled}
 			onClick={onClick}
-			onMouseEnter={() => setHovered(true)}
+			onMouseEnter={() => {
+				if (!disabled) setHovered(true);
+			}}
 			onMouseLeave={() => setHovered(false)}
 			style={{
 				height: "auto",
